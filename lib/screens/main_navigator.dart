@@ -101,18 +101,32 @@ class _MainNavigatorState extends State<MainNavigator> {
     return Scaffold(
       body: _buildBody(),
       bottomNavigationBar: BottomNavigationBar(
+        // Los estilos (colores, etc.) ahora vienen del theme.dart
+        // Solo definimos los íconos aquí.
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.local_offer), label: 'Ofertas'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_business), label: 'Publicar'),
-          BottomNavigationBarItem(icon: Icon(Icons.contact_phone), label: 'Contacto'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home), // Icono relleno cuando está activo
+            label: 'Inicio',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_offer_outlined),
+            activeIcon: Icon(Icons.local_offer),
+            label: 'Ofertas',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.add_business_outlined),
+            activeIcon: Icon(Icons.add_business),
+            label: 'Publicar',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.contact_phone_outlined),
+            activeIcon: Icon(Icons.contact_phone),
+            label: 'Contacto',
+          ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: _selectedIndex == 1 ? Colors.red : Theme.of(context).primaryColor,
-        unselectedItemColor: Colors.grey,
         onTap: (index) => setState(() => _selectedIndex = index),
-        showUnselectedLabels: true,
-        type: BottomNavigationBarType.fixed,
       ),
     );
   }
@@ -156,6 +170,9 @@ class _MainNavigatorState extends State<MainNavigator> {
       ];
       return IndexedStack(index: _selectedIndex, children: screens);
     }
+    // --- CORRECCIÓN APLICADA AQUÍ ---
+    // Este es el return que faltaba.
     return const Center(child: Text('Error inesperado. Intenta reiniciar la app.'));
   }
 }
+

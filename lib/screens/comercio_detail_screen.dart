@@ -3,7 +3,7 @@ import 'package:card_swiper/card_swiper.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:share_plus/share_plus.dart'; // <-- 1. IMPORTAMOS EL NUEVO PAQUETE
+import 'package:share_plus/share_plus.dart';
 import '../models/comercio.dart';
 import '../services/api_service.dart';
 
@@ -19,11 +19,9 @@ class ComercioDetailScreen extends StatelessWidget {
     }
   }
 
-  // --- 2. NUEVA FUNCIÓN PARA COMPARTIR ---
   void _shareComercio(BuildContext context) {
-    // ¡IMPORTANTE! Reemplaza esto con los links reales de tu app cuando la publiques
-    final String playStoreLink = "https://play.google.com/store/apps/details?id=tu.paquete.android";
-    final String appStoreLink = "https://apps.apple.com/app/id-de-tu-app";
+    const String playStoreLink = "https://play.google.com/store/apps/details?id=tu.paquete.android";
+    const String appStoreLink = "https://apps.apple.com/app/id-de-tu-app";
 
     final String shareText =
         "¡Mira este lugar que encontré en Tuc Comercial!\n\n"
@@ -42,45 +40,58 @@ class ComercioDetailScreen extends StatelessWidget {
         .where((f) => f != null && f.isNotEmpty)
         .map((f) {
       final fotoUrl = f ?? '';
-      return fotoUrl.startsWith('http')
-          ? fotoUrl
-          : '${ApiService.baseUrl}uploads/$fotoUrl';
+      return fotoUrl.startsWith('http') ? fotoUrl : '${ApiService.baseUrl}uploads/$fotoUrl';
     })
         .toList();
 
     return Scaffold(
-      appBar: AppBar(title: Text(comercio.nombre)),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (images.isNotEmpty)
-              SizedBox(
-                height: 250,
-                child: Swiper(
-                  itemBuilder: (BuildContext context, int index) {
-                    return CachedNetworkImage(
-                      imageUrl: images[index],
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(color: Colors.grey[300]),
-                      errorWidget: (context, url, error) => const Icon(Icons.error),
-                    );
-                  },
-                  itemCount: images.length,
-                  pagination: const SwiperPagination(),
-                  control: const SwiperControl(color: Colors.white),
+      body: CustomScrollView(
+        slivers: <Widget>[
+          SliverAppBar(
+            expandedHeight: MediaQuery.of(context).size.height * 0.45,
+            floating: false,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(
+                comercio.nombre,
+                // --- CAMBIO APLICADO AQUÍ ---
+                // Se añade el color blanco para asegurar el contraste.
+                style: const TextStyle(
+                  color: Colors.white,
+                  shadows: [Shadow(blurRadius: 10.0, color: Colors.black)],
                 ),
+              ),
+              background: images.isNotEmpty
+                  ? Swiper(
+                itemBuilder: (BuildContext context, int index) {
+                  return CachedNetworkImage(
+                    imageUrl: images[index],
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(color: Colors.grey[300]),
+                    errorWidget: (context, url, error) => const Icon(Icons.error),
+                  );
+                },
+                itemCount: images.length,
+                pagination: SwiperPagination(
+                  builder: DotSwiperPaginationBuilder(
+                    color: Colors.white70,
+                    activeColor: Theme.of(context).primaryColor,
+                  ),
+                ),
+                control: const SwiperControl(color: Colors.white),
               )
-            else
-              Container(height: 250, color: Colors.grey[300], child: const Center(child: Icon(Icons.image, size: 50, color: Colors.grey))),
-
-            Padding(
+                  : Container(
+                color: Colors.grey[300],
+                child: const Center(child: Icon(Icons.image, size: 50, color: Colors.grey)),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(comercio.nombre, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -95,9 +106,7 @@ class ComercioDetailScreen extends StatelessWidget {
                         _buildActionButton(FontAwesomeIcons.facebook, 'Facebook', Colors.blue, () => _launchURL(comercio.facebook!)),
                       if (comercio.ubicacionUrl != null && comercio.ubicacionUrl!.isNotEmpty)
                         _buildActionButton(FontAwesomeIcons.mapLocationDot, 'Ubicación', Colors.red, () => _launchURL(comercio.ubicacionUrl!)),
-
-                      // --- 3. AÑADIMOS EL NUEVO BOTÓN DE COMPARTIR ---
-                      _buildActionButton(Icons.share, 'Compartir', Colors.blue, () => _shareComercio(context)),
+                      _buildActionButton(Icons.share, 'Compartir', Colors.blueGrey, () => _shareComercio(context)),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -113,23 +122,26 @@ class ComercioDetailScreen extends StatelessWidget {
                     Text('Horarios de atención', style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 8),
                     Text(comercio.horarios!, style: Theme.of(context).textTheme.bodyLarge),
+                    const SizedBox(height: 24),
                   ],
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildActionButton(IconData icon, String label, Color color, VoidCallback onPressed) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton(icon: FaIcon(icon), iconSize: 30, color: color, onPressed: onPressed),
+        IconButton(icon: FaIcon(icon), iconSize: 28, color: color, onPressed: onPressed, splashRadius: 24),
         const SizedBox(height: 4),
         Text(label, style: const TextStyle(fontSize: 12)),
       ],
     );
   }
 }
+

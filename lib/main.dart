@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'screens/main_navigator.dart';
-// import 'screens/mapa_comercios.dart'; // No necesitas esta importación si no la usas en main.dart
+import 'theme.dart'; // <-- 1. IMPORTAMOS NUESTRO ARCHIVO DE TEMA
 
 void main() {
   runApp(const MyApp());
@@ -15,25 +15,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Tuc Comercial',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-        useMaterial3: true,
-        fontFamily: 'Inter',
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          elevation: 1,
-          centerTitle: true,
-          titleTextStyle: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-          iconTheme: IconThemeData(color: Colors.black),
-        ),
-      ),
-      // Vuelve a la pantalla de inicio original
+      // --- 2. APLICAMOS EL NUEVO TEMA ---
+      // Todo el diseño (colores, fuentes, estilos de barras y tarjetas)
+      // ahora será controlado por la función buildAppTheme().
+      theme: buildAppTheme(),
+      // ------------------------------------
       home: const MainNavigator(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
+
