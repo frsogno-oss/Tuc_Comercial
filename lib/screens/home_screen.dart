@@ -1,5 +1,3 @@
-// lib/screens/home_screen.dart
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:card_swiper/card_swiper.dart';
@@ -14,6 +12,7 @@ import '../widgets/terms_dialog.dart';
 import 'all_categories_screen.dart';
 import 'comercio_detail_screen.dart';
 import 'sub_rubros_screen.dart';
+import '../theme.dart'; // Importamos nuestro tema
 
 class HomeScreen extends StatefulWidget {
   final List<Ciudad> ciudades;
@@ -83,6 +82,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showCityPicker(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (BuildContext context) {
         return ListView.builder(
           itemCount: widget.ciudades.length,
@@ -103,18 +105,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Calculamos la altura del carrusel para que ocupe la mitad de la pantalla
+    final screenHeight = MediaQuery.of(context).size.height;
+    final carouselHeight = screenHeight * 0.45; // 45% de la pantalla
+
     return Scaffold(
       appBar: AppBar(
-        // CAMBIO: Título de la app con icono
-        title: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.map_outlined, color: Colors.teal),
-            SizedBox(width: 8),
-            Text('Tuc Comercial'),
-          ],
-        ),
+        title: const Text('Tuc Comercial'),
         actions: [
+          // Selector de Ciudad ahora está en el AppBar para un look más limpio
+          TextButton.icon(
+            onPressed: () => _showCityPicker(context),
+            icon: const Icon(Icons.location_on, size: 20),
+            label: Text(widget.ciudadActual.nombre),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.textOnPrimary, // Color del tema
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.info_outline),
             tooltip: 'Términos y Condiciones',
@@ -129,41 +136,15 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-          // CAMBIO: Nuevo selector de ciudad transparente
-          GestureDetector(
-            onTap: () => _showCityPicker(context),
-            child: Container(
-              color: Colors.transparent,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.location_on, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Text(
-                    widget.ciudadActual.nombre,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const Icon(Icons.arrow_drop_down, color: Colors.grey),
-                ],
-              ),
-            ),
+          // La barra de búsqueda ahora tiene su propio padding
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+            child: _buildSearchBar(),
           ),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                children: [
-                  _buildSearchBar(),
-                  const SizedBox(height: 10),
-                  Expanded(
-                    child: _isSearching
-                        ? _buildSearchResults()
-                        : _buildMainContent(),
-                  ),
-                ],
-              ),
-            ),
+            child: _isSearching
+                ? _buildSearchResults()
+                : _buildMainContent(carouselHeight), // Pasamos la altura al widget
           ),
         ],
       ),
@@ -176,18 +157,28 @@ class _HomeScreenState extends State<HomeScreen> {
       onChanged: _onSearchChanged,
       decoration: InputDecoration(
         hintText: 'Buscar en ${widget.ciudadActual.nombre}...',
-        prefixIcon: const Icon(Icons.search),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(30.0), borderSide: BorderSide.none),
+        prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30.0),
+          borderSide: const BorderSide(color: AppColors.shadow, width: 1.5),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30.0),
+          borderSide: const BorderSide(color: AppColors.shadow, width: 1.5),
+        ),
         filled: true,
-        fillColor: Colors.grey[200],
+        fillColor: AppColors.cardBackground,
+        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
         suffixIcon: _searchController.text.isNotEmpty
-            ? IconButton(icon: const Icon(Icons.clear), onPressed: () {
-          _searchController.clear();
-          setState(() {
-            _isSearching = false;
-            _searchResults = [];
-          });
-        })
+            ? IconButton(
+            icon: const Icon(Icons.clear),
+            onPressed: () {
+              _searchController.clear();
+              setState(() {
+                _isSearching = false;
+                _searchResults = [];
+              });
+            })
             : null,
       ),
     );
@@ -198,12 +189,15 @@ class _HomeScreenState extends State<HomeScreen> {
       return const Center(child: Text('No se encontraron resultados.'));
     }
     return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
       itemCount: _searchResults.length,
       itemBuilder: (context, index) {
         final comercio = _searchResults[index];
         return Card(
+          margin: const EdgeInsets.only(bottom: 10),
           child: ListTile(
-            title: Text(comercio.nombre),
+            title: Text(comercio.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text(comercio.descripcion ?? ''),
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => ComercioDetailScreen(comercio: comercio)));
             },
@@ -213,26 +207,28 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildMainContent() {
+  Widget _buildMainContent(double carouselHeight) {
     return SingleChildScrollView(
+      // Ya no necesitamos padding aquí porque el body ya lo tiene
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildFeaturedCarousel(context),
-          const SizedBox(height: 24),
-          _buildCategoriesSection(context),
+          _buildFeaturedCarousel(context, carouselHeight),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: _buildCategoriesSection(context),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFeaturedCarousel(BuildContext context) {
+  Widget _buildFeaturedCarousel(BuildContext context, double height) {
     final comerciosDestacados = widget.comercios.where((c) => c.esDestacado).toList();
     if (comerciosDestacados.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(
-      // CAMBIO: Carrusel más grande
-      height: 220,
+      height: height, // Usamos la altura calculada
       child: Swiper(
         itemBuilder: (BuildContext context, int index) {
           final comercio = comerciosDestacados[index];
@@ -246,9 +242,10 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.push(context, MaterialPageRoute(builder: (context) => ComercioDetailScreen(comercio: comercio)));
             },
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 5.0),
+              // El margen ahora es vertical para dar espacio arriba y abajo
+              margin: const EdgeInsets.symmetric(vertical: 10.0),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(15.0),
+                borderRadius: BorderRadius.circular(20.0),
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -258,19 +255,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       placeholder: (context, url) => Container(color: Colors.grey[300]),
                       errorWidget: (context, url, error) => const Icon(Icons.error, color: Colors.white),
                     ),
+                    // Degradado para asegurar la legibilidad del texto
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Colors.black.withAlpha(150), Colors.transparent],
+                          colors: [Colors.black.withOpacity(0.7), Colors.transparent],
                           begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
+                          end: Alignment.center,
                         ),
                       ),
-                      padding: const EdgeInsets.all(12.0),
+                      padding: const EdgeInsets.all(16.0),
                       alignment: Alignment.bottomLeft,
                       child: Text(
                         comercio.nombre,
-                        style: const TextStyle(fontSize: 18.0, color: Colors.white, fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontSize: 22.0, color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -280,26 +278,42 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
         itemCount: comerciosDestacados.length,
-        pagination: const SwiperPagination(builder: DotSwiperPaginationBuilder(color: Colors.grey, activeColor: Colors.teal)),
+        // Indicadores de puntos
+        pagination: const SwiperPagination(
+          builder: DotSwiperPaginationBuilder(
+            color: Colors.white70,
+            activeColor: AppColors.primaryYellow,
+          ),
+        ),
         autoplay: true,
-        viewportFraction: 0.85,
+        viewportFraction: 0.85, // Un poco más grande para que se vea más imponente
         scale: 0.9,
       ),
     );
   }
 
   Widget _buildCategoriesSection(BuildContext context) {
+    // Colores sobrios para las tarjetas de categorías
+    final List<Color> categoryColors = [
+      const Color(0xFFEBF4FF), // Azul claro
+      const Color(0xFFFFFBEB), // Amarillo claro
+      const Color(0xFFF0FFF4), // Verde claro
+      const Color(0xFFFFF5F5), // Rojo claro
+      const Color(0xFFF9F5FF), // Púrpura claro
+      const Color(0xFFFFF8E1), // Naranja claro
+    ];
+
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Categorías', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            Text('Rubros', style: Theme.of(context).textTheme.titleLarge),
             TextButton(
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => AllCategoriesScreen(rubros: widget.rubros, subRubros: widget.subRubros, comercios: widget.comercios)));
               },
-              child: const Text('Ver todas'),
+              child: const Text('Ver todos'),
             ),
           ],
         ),
@@ -307,13 +321,20 @@ class _HomeScreenState extends State<HomeScreen> {
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1,
+          ),
           itemCount: widget.rubros.length > 6 ? 6 : widget.rubros.length,
           itemBuilder: (context, index) {
             final rubro = widget.rubros[index];
             return Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0), side: BorderSide(color: Colors.grey.shade300, width: 1)),
-              elevation: 4.0,
+              // Usamos los colores sobrios definidos arriba
+              color: categoryColors[index % categoryColors.length],
+              // Quitamos el borde de la tarjeta para un look más integrado
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
                 onTap: () {
@@ -323,9 +344,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(_getIconData(rubro.icono), size: 40, color: Theme.of(context).primaryColor),
+                    Icon(_getIconData(rubro.icono), size: 35, color: AppColors.textPrimary),
                     const SizedBox(height: 8),
-                    Text(rubro.nombre, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+                    Text(
+                      rubro.nombre,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
@@ -343,9 +369,9 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'restaurant': return Icons.restaurant;
       case 'storefront': return Icons.storefront;
       case 'school': return Icons.school;
-      case 'sports_soccer':return Icons.sports_soccer;
-      case 'checkroom':return Icons.checkroom;
-      case 'east':return Icons.east;
+      case 'sports_soccer': return Icons.sports_soccer;
+      case 'checkroom': return Icons.checkroom;
+      case 'east': return Icons.east;
       default: return Icons.category;
     }
   }
