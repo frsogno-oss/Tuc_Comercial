@@ -4,13 +4,25 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-// Agregamos 'const' y 'key' al constructor
+// --- 🎯 INICIO DE LA CORRECCIÓN ---
+// Fíjate cómo ahora guardamos las variables que recibe el widget
+
 class MapaComerciosPage extends StatefulWidget {
-  const MapaComerciosPage({super.key, required LatLng initialPosition, required int idSubRubro});
+  // 1. Declaramos las variables finales que el widget guardará
+  final LatLng initialPosition;
+  final int idSubRubro;
+
+  // 2. El constructor usa "this." para guardar los valores
+  const MapaComerciosPage({
+    super.key,
+    required this.initialPosition,
+    required this.idSubRubro,
+  });
 
   @override
   _MapaComerciosPageState createState() => _MapaComerciosPageState();
 }
+// --- FIN DE LA CORRECCIÓN ---
 
 // Clase de estado para MapaComerciosPage
 class _MapaComerciosPageState extends State<MapaComerciosPage> {
@@ -63,15 +75,18 @@ class _MapaComerciosPageState extends State<MapaComerciosPage> {
       _isLoading = false;
     });
 
+    // Llamamos a la función para buscar comercios
     _fetchNearbyBusinesses(position.latitude, position.longitude);
   }
 
   // Llama a tu script PHP
   Future<void> _fetchNearbyBusinesses(double lat, double lon) async {
-    // Reemplaza 'http' por 'https' si tu servidor usa SSL.
-    // También, asegúrate de que la IP y el puerto sean correctos.
+    // Esta línea ahora funciona porque 'widget.idSubRubro' existe
     final uri = Uri.parse(
-        'https://tuccomercial.uno/buscar_cercanos.php?latitud=$lat&longitud=$lon');
+        'https://tuccomercial.uno/buscar_cercanos.php?latitud=$lat&longitud=$lon&id_sub_rubro=${widget.idSubRubro}');
+
+    // Imprime la URL para verificarla en la consola de depuración
+    print('Llamando a la URL: $uri');
 
     try {
       final response = await http.get(uri);
@@ -79,6 +94,7 @@ class _MapaComerciosPageState extends State<MapaComerciosPage> {
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         if (jsonResponse['success'] == true) {
+          // Esta línea ya estaba correcta, accede a 'comercios'
           List<dynamic> comercios = jsonResponse['comercios'] as List<dynamic>;
           _markers.clear();
           for (var comercio in comercios) {
@@ -96,7 +112,7 @@ class _MapaComerciosPageState extends State<MapaComerciosPage> {
               ),
             );
           }
-          setState(() {});
+          setState(() {}); // Actualiza el mapa con los marcadores
         } else {
           // Muestra el mensaje de error del servidor
           print('Error del servidor: ${jsonResponse['message']}');
@@ -121,15 +137,19 @@ class _MapaComerciosPageState extends State<MapaComerciosPage> {
       appBar: AppBar(
         title: const Text('Comercios Cercanos'),
       ),
-      body: _isLoading || _currentPosition == null // <-- ¡Condición corregida!
+      body: _isLoading || _currentPosition == null
           ? const Center(child: CircularProgressIndicator())
           : GoogleMap(
         onMapCreated: _onMapCreated,
         initialCameraPosition: CameraPosition(
-          target: _currentPosition!,
+          // Usamos la posición del widget como inicial si el GPS falla,
+          // o la del GPS si funciona.
+          target: _currentPosition ?? widget.initialPosition,
           zoom: 14.0,
         ),
         markers: _markers,
+        myLocationEnabled: true, // Opcional: muestra el punto azul del usuario
+        myLocationButtonEnabled: true, // Opcional: botón para centrar en el usuario
       ),
     );
   }

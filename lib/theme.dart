@@ -9,6 +9,8 @@ class AppColors {
   static const Color textPrimary = Color(0xFF1E293B);
   static const Color textSecondary = Color(0xFF64748B);
   static const Color shadow = Color(0xFFE2E8F0);
+
+  static Color? get primary => null;
 }
 
 // Aquí definimos el tema completo de la aplicación.

@@ -51,5 +51,7 @@
     <string>Esta aplicación necesita tu ubicación para mostrar comercios cercanos.</string>
     <key>com.google.maps.API_KEY</key>
     <string>AIzaSyDGMU511TowtlAY6HJM3bUQmg05M8PVIQU</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Necesitamos usar el micro para que hables con la IA</string>
 </dict>
 </plist>

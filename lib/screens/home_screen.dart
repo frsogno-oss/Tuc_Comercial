@@ -12,7 +12,8 @@ import '../widgets/terms_dialog.dart';
 import 'all_categories_screen.dart';
 import 'comercio_detail_screen.dart';
 import 'sub_rubros_screen.dart';
-import '../theme.dart'; // Importamos nuestro tema
+import 'asistente_chat_page.dart'; // <-- 1. IMPORTACIÓN DEL ASISTENTE
+import '../theme.dart';
 
 class HomeScreen extends StatefulWidget {
   final List<Ciudad> ciudades;
@@ -75,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() => _searchResults = results);
       }
     } catch (e) {
-      // Opcional: Mostrar un mensaje de error si la búsqueda falla
+      // Opcional: Manejo de errores
     }
   }
 
@@ -105,21 +106,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Calculamos la altura del carrusel para que ocupe la mitad de la pantalla
     final screenHeight = MediaQuery.of(context).size.height;
-    final carouselHeight = screenHeight * 0.45; // 45% de la pantalla
+    final carouselHeight = screenHeight * 0.45;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tuc Comercial'),
         actions: [
-          // Selector de Ciudad ahora está en el AppBar para un look más limpio
           TextButton.icon(
             onPressed: () => _showCityPicker(context),
             icon: const Icon(Icons.location_on, size: 20),
             label: Text(widget.ciudadActual.nombre),
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.textOnPrimary, // Color del tema
+              foregroundColor: AppColors.textOnPrimary,
             ),
           ),
           IconButton(
@@ -136,7 +135,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-          // La barra de búsqueda ahora tiene su propio padding
           Padding(
             padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
             child: _buildSearchBar(),
@@ -144,10 +142,24 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: _isSearching
                 ? _buildSearchResults()
-                : _buildMainContent(carouselHeight), // Pasamos la altura al widget
+                : _buildMainContent(carouselHeight),
           ),
         ],
       ),
+
+      // --- 2. BOTÓN FLOTANTE DEL ASISTENTE IA ---
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) =>  AsistentechatPage()),
+          );
+        },
+        label: const Text('Asistente IA'),
+        icon: const Icon(Icons.auto_awesome),
+        backgroundColor: Colors.yellow,
+      ),
+      // -----------------------------------------
     );
   }
 
@@ -209,7 +221,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildMainContent(double carouselHeight) {
     return SingleChildScrollView(
-      // Ya no necesitamos padding aquí porque el body ya lo tiene
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -228,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (comerciosDestacados.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(
-      height: height, // Usamos la altura calculada
+      height: height,
       child: Swiper(
         itemBuilder: (BuildContext context, int index) {
           final comercio = comerciosDestacados[index];
@@ -242,7 +253,6 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.push(context, MaterialPageRoute(builder: (context) => ComercioDetailScreen(comercio: comercio)));
             },
             child: Container(
-              // El margen ahora es vertical para dar espacio arriba y abajo
               margin: const EdgeInsets.symmetric(vertical: 10.0),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20.0),
@@ -255,7 +265,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       placeholder: (context, url) => Container(color: Colors.grey[300]),
                       errorWidget: (context, url, error) => const Icon(Icons.error, color: Colors.white),
                     ),
-                    // Degradado para asegurar la legibilidad del texto
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -278,7 +287,6 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
         itemCount: comerciosDestacados.length,
-        // Indicadores de puntos
         pagination: const SwiperPagination(
           builder: DotSwiperPaginationBuilder(
             color: Colors.white70,
@@ -286,21 +294,20 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         autoplay: true,
-        viewportFraction: 0.85, // Un poco más grande para que se vea más imponente
+        viewportFraction: 0.85,
         scale: 0.9,
       ),
     );
   }
 
   Widget _buildCategoriesSection(BuildContext context) {
-    // Colores sobrios para las tarjetas de categorías
     final List<Color> categoryColors = [
-      const Color(0xFFEBF4FF), // Azul claro
-      const Color(0xFFFFFBEB), // Amarillo claro
-      const Color(0xFFF0FFF4), // Verde claro
-      const Color(0xFFFFF5F5), // Rojo claro
-      const Color(0xFFF9F5FF), // Púrpura claro
-      const Color(0xFFFFF8E1), // Naranja claro
+      const Color(0xFFEBF4FF),
+      const Color(0xFFFFFBEB),
+      const Color(0xFFF0FFF4),
+      const Color(0xFFFFF5F5),
+      const Color(0xFFF9F5FF),
+      const Color(0xFFFFF8E1),
     ];
 
     return Column(
@@ -331,9 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
           itemBuilder: (context, index) {
             final rubro = widget.rubros[index];
             return Card(
-              // Usamos los colores sobrios definidos arriba
               color: categoryColors[index % categoryColors.length],
-              // Quitamos el borde de la tarjeta para un look más integrado
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
               clipBehavior: Clip.antiAlias,
               child: InkWell(

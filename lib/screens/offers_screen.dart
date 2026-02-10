@@ -1,5 +1,3 @@
-// lib/screens/offers_screen.dart (CORREGIDO)
-
 import 'package:flutter/material.dart';
 import 'package:card_swiper/card_swiper.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -30,13 +28,15 @@ class OffersScreen extends StatelessWidget {
       // Si hay ofertas, muestra el carrusel
           : Center(
         child: Container(
-          constraints: const BoxConstraints(maxHeight: 500), // Limita la altura del carrusel
+          // --- 1. MODIFICADO: Más "alargado" ---
+          // Aumentamos la altura máxima del carrusel.
+          constraints: const BoxConstraints(maxHeight: 600), // Antes era 500
           child: Swiper(
             itemBuilder: (BuildContext context, int index) {
               final comercio = comerciosEnOferta[index];
               final fotoUrl = comercio.foto2 ?? '';
 
-              // --- 2. LÓGICA DE URL CORREGIDA ---
+              // --- LÓGICA DE URL CORREGIDA ---
               // Construye la URL completa usando la dirección del servidor real.
               final imageUrl = fotoUrl.startsWith('http')
                   ? fotoUrl
@@ -71,7 +71,7 @@ class OffersScreen extends StatelessWidget {
                         right: 0,
                         child: Container(
                           decoration: BoxDecoration(
-                            // --- 3. CORRECCIÓN DE SINTAXIS DEL GRADIENTE ---
+                            // --- CORRECCIÓN DE SINTAXIS DEL GRADIENTE ---
                             gradient: LinearGradient(
                               colors: [Colors.black.withOpacity(0.7), Colors.transparent],
                               begin: Alignment.bottomCenter,
@@ -96,8 +96,12 @@ class OffersScreen extends StatelessWidget {
               );
             },
             itemCount: comerciosEnOferta.length,
-            viewportFraction: 0.8,
-            scale: 0.9,
+            // --- 2. MODIFICADO: Más "ancho" ---
+            // Cada tarjeta ocupa más espacio horizontal.
+            viewportFraction: 0.9, // Antes era 0.8
+            // --- 3. MODIFICADO: Ajuste de escala ---
+            // Las tarjetas de los lados se ven un poco más grandes.
+            scale: 0.95, // Antes era 0.9
             autoplay: true,
             pagination: const SwiperPagination(
               builder: DotSwiperPaginationBuilder(

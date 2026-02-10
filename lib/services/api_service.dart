@@ -53,7 +53,17 @@ class ApiService {
       throw Exception('Falló la búsqueda de comercios');
     }
   }
-
+// Agregá este método al final de tu clase ApiService existente
+  Future<Comercio?> getComercioById(int id) async {
+    final response = await http.get(Uri.parse('${baseUrl}obtener_comercio.php?id=$id'));
+    if (response.statusCode == 200) {
+      final dynamic jsonData = json.decode(response.body);
+      if (jsonData != null) {
+        return Comercio.fromJson(jsonData);
+      }
+    }
+    return null;
+  }
   Future<List<Comercio>> getComerciosCercanos({required double lat, required double lon, int? idSubRubro}) async {
     String url = '${baseUrl}buscar_cercanos.php?lat=$lat&lon=$lon';
     if (idSubRubro != null) {
@@ -89,4 +99,6 @@ class ApiService {
       throw Exception('Error del servidor: ${streamedResponse.statusCode}');
     }
   }
+
+  Future getDatosPorCiudad(int id) async {}
 }

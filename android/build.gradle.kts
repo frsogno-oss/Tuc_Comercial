@@ -22,3 +22,14 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+
+subprojects {
+    // Aplicamos la configuración de forma directa sin esperar al afterEvaluate
+    plugins.withType<com.android.build.gradle.api.AndroidBasePlugin> {
+        configure<com.android.build.gradle.BaseExtension> {
+            if (namespace == null) {
+                namespace = "uno.tuccomercial.app.${project.name.replace("-", "_")}"
+            }
+        }
+    }
+}

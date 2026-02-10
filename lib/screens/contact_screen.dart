@@ -56,15 +56,23 @@ class _ContactScreenState extends State<ContactScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const CircleAvatar(radius: 50, child: Icon(Icons.person, size: 50)),
+                  // <-- CAMBIO 1: Reemplazamos el ícono por tu logo
+                  const CircleAvatar(
+                    radius: 50,
+                    // Usamos tu logo como fondo del círculo
+                    backgroundImage: AssetImage('assets/logo_foreground.png'),
+                    // Fondo transparente por si el logo no carga
+                    backgroundColor: Colors.transparent,
+                  ),
                   const SizedBox(height: 16),
+                  // <-- CAMBIO 2: Reemplazamos el nombre dinámico por el de tu app
                   Text(
-                    data['nombre_administrador'] ?? 'Administrador',
+                    'Tuc Comercial',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    data['slogan'] ?? 'Tu Guía de Confianza',
+                    data['slogan'] ?? 'Tu Guía de Confianza', // Mantenemos el slogan
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey),
                   ),
                   const SizedBox(height: 32),

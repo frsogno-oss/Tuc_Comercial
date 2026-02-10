@@ -3,7 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'dart:io';
+import "dart:io";
 
 import 'package:Tuc_Comercial/models/rubro.dart';
 import 'package:Tuc_Comercial/models/sub_rubro.dart';
@@ -43,6 +43,9 @@ class _PublishScreenState extends State<PublishScreen> {
   SubRubro? _selectedSubRubro;
   Ciudad? _selectedCiudad;
 
+  // Estado para controlar el cargador
+  bool _isUploading = false;
+
   @override
   void initState() {
     super.initState();
@@ -77,49 +80,57 @@ class _PublishScreenState extends State<PublishScreen> {
 
   void _enviarFormulario() async {
     // 1. Validar que los campos obligatorios estén llenos
-    if (_nombreController.text.isEmpty ||
+    if (_nombreController.text.trim().isEmpty ||
         _selectedRubro == null ||
         _selectedSubRubro == null ||
         _selectedCiudad == null ||
         _selectedLocation == null) {
-      Fluttertoast.showToast(msg: "Por favor, completa los campos obligatorios.");
+      Fluttertoast.showToast(msg: "Por favor, completa los campos obligatorios (*).");
       return;
     }
 
-    // 2. Crear la petición multipart para enviar datos y fotos
-    final uri = Uri.parse('https://tuccomercial.uno/crear_solicitud.php'); // Asegúrate que la ruta sea correcta
-    var request = http.MultipartRequest('POST', uri);
+    // Iniciar carga
+    setState(() {
+      _isUploading = true;
+    });
 
-    // 3. Añadir los campos de texto
-    request.fields['nombre'] = _nombreController.text;
-    request.fields['descripcion'] = _descripcionController.text;
-    request.fields['horarios'] = _horariosController.text;
-    request.fields['whatsapp'] = _whatsappController.text;
-    request.fields['instagram'] = _instagramController.text;
-    request.fields['facebook'] = _facebookController.text;
-    request.fields['latitud'] = _selectedLocation!.latitude.toString();
-    request.fields['longitud'] = _selectedLocation!.longitude.toString();
-    request.fields['id_rubro'] = _selectedRubro!.id.toString();
-    request.fields['id_sub_rubro'] = _selectedSubRubro!.id.toString();
-    request.fields['id_ciudad'] = _selectedCiudad!.id.toString();
-
-    // 4. Añadir las fotos
-    for (var i = 0; i < _selectedPhotos.length; i++) {
-      final foto = _selectedPhotos[i];
-      request.files.add(await http.MultipartFile.fromPath('fotos[]', foto.path));
-    }
-
-    // 5. Enviar la petición y manejar la respuesta
     try {
+      final uri = Uri.parse('https://tuccomercial.uno/crear_solicitud.php');
+      var request = http.MultipartRequest('POST', uri);
+
+      // 3. Añadir los campos de texto
+      request.fields['nombre'] = _nombreController.text.trim();
+      request.fields['descripcion'] = _descripcionController.text.trim();
+      request.fields['horarios'] = _horariosController.text.trim();
+      request.fields['whatsapp'] = _whatsappController.text.trim();
+      request.fields['instagram'] = _instagramController.text.trim();
+      request.fields['facebook'] = _facebookController.text.trim();
+      request.fields['latitud'] = _selectedLocation!.latitude.toString();
+      request.fields['longitud'] = _selectedLocation!.longitude.toString();
+      request.fields['id_rubro'] = _selectedRubro!.id.toString();
+      request.fields['id_sub_rubro'] = _selectedSubRubro!.id.toString();
+      request.fields['id_ciudad'] = _selectedCiudad!.id.toString();
+
+      // 4. Añadir las fotos (MANTENIENDO TU LÓGICA ORIGINAL)
+      for (var i = 0; i < _selectedPhotos.length; i++) {
+        final foto = _selectedPhotos[i];
+        request.files.add(await http.MultipartFile.fromPath('fotos[]', foto.path));
+      }
+
       final response = await request.send();
       if (response.statusCode == 200) {
         Fluttertoast.showToast(msg: "Solicitud enviada con éxito.");
-        _limpiarFormulario(); // Limpiar el formulario si todo sale bien
+        _limpiarFormulario();
       } else {
         Fluttertoast.showToast(msg: "Error al enviar la solicitud.");
       }
     } catch (e) {
       Fluttertoast.showToast(msg: "Error de conexión: ${e.toString()}");
+    } finally {
+      // Finalizar carga pase lo que pase
+      setState(() {
+        _isUploading = false;
+      });
     }
   }
 
@@ -138,6 +149,19 @@ class _PublishScreenState extends State<PublishScreen> {
     });
   }
 
+  // Función para crear labels con asterisco rojo
+  Widget _buildLabel(String labelText, bool required) {
+    return RichText(
+      text: TextSpan(
+        text: labelText,
+        style: const TextStyle(color: Colors.black87, fontSize: 16),
+        children: required
+            ? [const TextSpan(text: ' *', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))]
+            : [],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     List<SubRubro> subrubrosFiltrados = _selectedRubro != null
@@ -153,19 +177,19 @@ class _PublishScreenState extends State<PublishScreen> {
           children: [
             TextField(
               controller: _nombreController,
-              decoration: const InputDecoration(labelText: 'Nombre del comercio'),
+              decoration: InputDecoration(label: _buildLabel('Nombre del comercio', true)),
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<Ciudad>(
-              decoration: const InputDecoration(labelText: 'Ciudad'),
-              initialValue: _selectedCiudad,
+              decoration: InputDecoration(label: _buildLabel('Ciudad', true)),
+              value: _selectedCiudad,
               items: widget.ciudades.map((Ciudad ciudad) {
                 return DropdownMenuItem<Ciudad>(
                   value: ciudad,
                   child: Text(ciudad.nombre),
                 );
               }).toList(),
-              onChanged: (newValue) {
+              onChanged: _isUploading ? null : (newValue) {
                 setState(() {
                   _selectedCiudad = newValue;
                 });
@@ -173,15 +197,15 @@ class _PublishScreenState extends State<PublishScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<Rubro>(
-              decoration: const InputDecoration(labelText: 'Rubro'),
-              initialValue: _selectedRubro,
+              decoration: InputDecoration(label: _buildLabel('Rubro', true)),
+              value: _selectedRubro,
               items: widget.rubros.map((Rubro rubro) {
                 return DropdownMenuItem<Rubro>(
                   value: rubro,
                   child: Text(rubro.nombre),
                 );
               }).toList(),
-              onChanged: (newValue) {
+              onChanged: _isUploading ? null : (newValue) {
                 setState(() {
                   _selectedRubro = newValue;
                   _selectedSubRubro = null;
@@ -192,15 +216,15 @@ class _PublishScreenState extends State<PublishScreen> {
               ...[
                 const SizedBox(height: 16),
                 DropdownButtonFormField<SubRubro>(
-                  decoration: const InputDecoration(labelText: 'Sub-rubro'),
-                  initialValue: _selectedSubRubro,
+                  decoration: InputDecoration(label: _buildLabel('Sub-rubro', true)),
+                  value: _selectedSubRubro,
                   items: subrubrosFiltrados.map((SubRubro subrubro) {
                     return DropdownMenuItem<SubRubro>(
                       value: subrubro,
                       child: Text(subrubro.nombre),
                     );
                   }).toList(),
-                  onChanged: (newValue) {
+                  onChanged: _isUploading ? null : (newValue) {
                     setState(() {
                       _selectedSubRubro = newValue;
                     });
@@ -234,23 +258,45 @@ class _PublishScreenState extends State<PublishScreen> {
               controller: _facebookController,
               decoration: const InputDecoration(labelText: 'Usuario o link de Facebook'),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _openMapSelector,
-              child: const Text('Seleccionar ubicación en el mapa'),
+            const SizedBox(height: 24),
+
+            // Botón de Ubicación con validación visual
+            ElevatedButton.icon(
+              onPressed: _isUploading ? null : _openMapSelector,
+              icon: Icon(
+                  Icons.location_on,
+                  color: _selectedLocation == null ? Colors.red : Colors.green
+              ),
+              label: Text(
+                _selectedLocation == null ? 'Seleccionar ubicación *' : 'Ubicación seleccionada ✓',
+                style: TextStyle(color: _selectedLocation == null ? Colors.red : Colors.green),
+              ),
             ),
+
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _pickImages,
-              child: const Text('Agregar Fotos (Max 3)'),
+            ElevatedButton.icon(
+              onPressed: _isUploading ? null : _pickImages,
+              icon: const Icon(Icons.add_a_photo),
+              label: const Text('Agregar Fotos (Max 3)'),
             ),
-            const SizedBox(height: 8),
             if (_selectedPhotos.isNotEmpty)
-              Text('${_selectedPhotos.length} fotos seleccionadas.'),
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text('${_selectedPhotos.length} fotos seleccionadas.', textAlign: TextAlign.center),
+              ),
+
             const SizedBox(height: 32),
-            ElevatedButton(
+
+            // Lógica del botón de envío / Cargador
+            _isUploading
+                ? const Center(child: CircularProgressIndicator())
+                : ElevatedButton(
               onPressed: _enviarFormulario,
-              child: const Text('Enviar'),
+              style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Colors.blueAccent
+              ),
+              child: const Text('ENVIAR SOLICITUD', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         ),

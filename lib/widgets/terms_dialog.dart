@@ -11,7 +11,7 @@ class TermsDialog extends StatelessWidget {
       title: const Text('Términos y Condiciones'),
       content: const SingleChildScrollView(
         child: Text(
-            '**Última actualización:** 24 de agosto de 2025\n\n'
+
                 'Bienvenido a **tuc Comercial**. Al usar esta aplicación, aceptas estar sujeto a estos términos.\n\n'
                 '**1. Objeto de la Aplicación**\n'
                 '"Tuc comercial" es una plataforma destinada a servir como guía comercial, permitiendo a los comercios locales publicar información sobre sus productos y servicios.\n\n'

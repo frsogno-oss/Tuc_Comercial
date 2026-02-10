@@ -1,4 +1,4 @@
-package com.example.Tuc_Comercial
+package uno.tuccomercial.app
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,4 +1,7 @@
-// --- CORRECCIÓN: Imports agregados ---
+// --- ARCHIVO COMPLETO Y CORREGIDO ---
+// android/app/build.gradle.kts
+
+// Agrega los imports necesarios al principio
 import java.util.Properties
 import java.io.FileInputStream
 
@@ -9,53 +12,50 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// --- CORRECCIÓN CLAVE AQUÍ ---
 // Carga las propiedades de tu archivo key.properties
-val keyPropertiesFile = rootProject.file("android/key.properties")
-val keyProperties = Properties() // Ahora 'Properties' es reconocido
+// Busca "key.properties" en la carpeta "android" (el rootProject de Gradle)
+val keyPropertiesFile = rootProject.file("key.properties")
+val keyProperties = Properties()
 if (keyPropertiesFile.exists()) {
-    keyProperties.load(FileInputStream(keyPropertiesFile)) // Ahora 'FileInputStream' es reconocido
+    keyProperties.load(FileInputStream(keyPropertiesFile))
+    println("¡Archivo key.properties cargado exitosamente!")
+} else {
+    println("ADVERTENCIA: El archivo android/key.properties no se encontró. La firma de lanzamiento fallará.")
 }
 
 android {
-    namespace = "uno.tuccomercial.app" // O el que prefieras
-    compileSdk = flutter.compileSdkVersion
+    // El namespace DEBE coincidir con el 'package' de tu MainActivity.kt
+    namespace = "uno.tuccomercial.app"
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     signingConfigs {
         create("release") {
-            // Lee las contraseñas y el alias como antes
             keyAlias = keyProperties["keyAlias"] as String? ?: ""
             keyPassword = keyProperties["keyPassword"] as String? ?: ""
+            // --- CORRECCIÓN CLAVE AQUÍ ---
+            // Lee la ruta "app/tuc_comercial_nueva.jks" desde key.properties
+            // y la resuelve correctamente a "android/app/tuc_comercial_nueva.jks"
+            storeFile = if (keyProperties["storeFile"] != null) rootProject.file(keyProperties["storeFile"] as String) else null
             storePassword = keyProperties["storePassword"] as String? ?: ""
-
-            // --- CAMBIO CLAVE AQUÍ ---
-            // Construimos la ruta al archivo JKS de forma más explícita
-            // Asumiendo que 'tuc_comercial_nueva.jks' está en la carpeta 'android/app'
-            val keystoreFile = rootProject.file("android/app/tuc_comercial_nueva.jks")
-            if (keystoreFile.exists()) {
-                storeFile = keystoreFile
-            } else {
-                // Si no encuentra el archivo, imprime un mensaje claro
-                println("Error: No se encontró el archivo keystore en android/app/tuc_comercial_nueva.jks")
-                // Podrías lanzar una excepción aquí si prefieres que falle antes
-                // throw GradleException("Keystore file not found at android/app/tuc_comercial_nueva.jks")
-            }
         }
     }
 
     defaultConfig {
-        applicationId = "uno.tuccomercial.app" // Debe coincidir con el namespace
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        // El applicationId DEBE coincidir con el 'package' de tu MainActivity.kt
+        applicationId = "uno.tuccomercial.app"
+        minSdk = 34
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -72,5 +72,5 @@ flutter {
 }
 
 dependencies {
-    // Podés tener otras dependencias aquí
+    // Tus dependencias
 }
